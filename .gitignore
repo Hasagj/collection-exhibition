@@ -1,0 +1,96 @@
+# =========================
+
+# Gradle
+
+# =========================
+
+.gradle/
+**/build/
+
+# Keep Gradle Wrapper
+
+!gradle/wrapper/gradle-wrapper.jar
+
+# =========================
+
+# IntelliJ IDEA
+
+# =========================
+
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# =========================
+
+# Eclipse / STS
+
+# =========================
+
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+.springBeans
+.sts4-cache
+bin/
+
+# =========================
+
+# NetBeans
+
+# =========================
+
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# =========================
+
+# VS Code
+
+# =========================
+
+.vscode/
+
+# =========================
+
+# Frontend
+
+# =========================
+
+frontend/node_modules/
+frontend/dist/
+
+# =========================
+
+# Environment / secrets
+
+# =========================
+
+.env
+.env.*
+!.env.example
+
+# =========================
+
+# Logs
+
+# =========================
+
+*.log
+logs/
+
+# =========================
+
+# OS generated files
+
+# =========================
+
+.DS_Store
+Thumbs.db
