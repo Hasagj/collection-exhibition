@@ -10,7 +10,9 @@ public class Photo {
     @Id
     @GeneratedValue
     private Long id;
+
     private String path;
+
     @ManyToOne
     private Card card;
 }

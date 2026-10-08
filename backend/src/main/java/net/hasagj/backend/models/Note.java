@@ -1,10 +1,7 @@
 package net.hasagj.backend.models;
 
 import jakarta.persistence.Entity;
-
-import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-public class Note extends Element {
-    private ArrayList<Element> relatedElements;
-}
+public class Note extends Element { }

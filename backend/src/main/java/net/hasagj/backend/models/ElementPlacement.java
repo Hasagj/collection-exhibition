@@ -8,9 +8,13 @@ public class ElementPlacement {
     @Id
     @GeneratedValue
     private Long id;
+
     @ManyToOne
     private Shelf shelf;
+
     @OneToOne
     private Element element;
+
+    @Embedded
     private Coordinates coordinates;
 }
