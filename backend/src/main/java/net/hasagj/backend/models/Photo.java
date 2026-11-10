@@ -17,6 +17,10 @@ public class Photo {
     @OneToOne
     private Group group;
 
+    protected Photo() {}
+
+    public Photo(String path) { this.path = path; }
+
     public Long getId() { return this.id; }
 
     public String getPath() { return this.path; }

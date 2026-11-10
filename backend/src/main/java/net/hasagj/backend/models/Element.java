@@ -20,7 +20,7 @@ public abstract class Element {
     @JoinColumn(nullable = false)
     private Collection collection;
 
-    @OneToOne(mappedBy = "element")
+    @OneToOne(mappedBy = "element", cascade = CascadeType.PERSIST)
     private ElementPlacement placement;
 
     @ManyToMany

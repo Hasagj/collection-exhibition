@@ -2,7 +2,6 @@ package net.hasagj.backend.services;
 
 import net.hasagj.backend.models.Collection;
 import net.hasagj.backend.repositories.CollectionRepository;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +17,7 @@ public class CollectionService {
     }
 
     public Collection create(String name, @Nullable String description) {
-        if (name == null || name.isBlank()) {
-            name = "Untitled";
-        }
+        name = name == null || name.isBlank() ? "Untitled" : name.trim();
         Collection collection =
                 new Collection(name.trim(), description == null || description.isBlank() ? null : description);
         return repository.save(collection);
@@ -38,12 +35,11 @@ public class CollectionService {
         Optional<Collection> collection = repository.findById(id);
         if (collection.isPresent()) {
             name = name == null || name.isBlank() ? collection.get().getName() : name;
+            description = description == null ? collection.get().getDescription() : description;
             collection.get().setName(name);
             collection.get().setDescription(description);
             return Optional.of(repository.save(collection.get()));
         } else return collection;
-
-
     }
 
     public Optional<Collection> delete(Long id) {

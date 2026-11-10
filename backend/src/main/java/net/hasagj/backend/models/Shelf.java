@@ -19,10 +19,14 @@ public class Shelf extends Element {
         super(name, description, collection, shelf, coordinates);
     }
 
-    public static Shelf createRoot(String name, String description, Collection collection) {
+    public Shelf(String name, String description, Collection collection, Shelf shelf, float x, float y) {
+        super(name, description, collection, shelf, x, y);
+    }
+
+    public static Shelf createRoot(Collection collection) {
         Shelf root = new Shelf();
-        root.setName(name);
-        root.setDescription(description);
+        root.setName("Root of collection: " + collection.getId());
+        root.setDescription("This is the root shelf");
         root.setCollection(collection);
         return root;
     }

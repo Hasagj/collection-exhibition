@@ -38,7 +38,7 @@ public class Card extends Element {
         if (position < 0 || this.photos.size() < position || photo == null) return false;
         if (position == this.photos.size()) {
             this.photos.add(photo);
-            return update();
+            return this.update();
         }
         List<Photo> left = new ArrayList<>(this.photos.subList(0, position));
         List<Photo> right = new ArrayList<>(this.photos.subList(position, this.photos.size()));
