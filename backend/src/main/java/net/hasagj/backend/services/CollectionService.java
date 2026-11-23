@@ -1,14 +1,17 @@
 package net.hasagj.backend.services;
 
+import net.hasagj.backend.dto.CollectionDto;
+import net.hasagj.backend.exceptions.collection.CollectionNotFoundException;
 import net.hasagj.backend.models.Collection;
+import net.hasagj.backend.models.Shelf;
 import net.hasagj.backend.repositories.CollectionRepository;
-import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class CollectionService {
     private final CollectionRepository repository;
 
@@ -16,37 +19,41 @@ public class CollectionService {
         this.repository = repository;
     }
 
-    public Collection create(String name, @Nullable String description) {
-        name = name == null || name.isBlank() ? "Untitled" : name.trim();
-        Collection collection =
-                new Collection(name.trim(), description == null || description.isBlank() ? null : description);
-        return repository.save(collection);
+    @Transactional
+    public CollectionDto.Response create(CollectionDto.CreateRequest createRequest) {
+        Collection collection = new Collection(createRequest.name(), createRequest.description());
+        Shelf rootShelf = Shelf.createRoot(collection);
+        collection.setRootShelf(rootShelf);
+        return CollectionDto.Response.from(repository.save(collection));
     }
 
-    public List<Collection> getAll() {
-        return repository.findAll();
+    public List<CollectionDto.SimpleResponse> getAll() {
+        return repository.findAllProjectedBy();
     }
 
-    public Optional<Collection> get(Long id) {
-        return repository.findById(id);
+    public CollectionDto.Response get(Long id) {
+        return CollectionDto.Response.from(this.find(id));
     }
 
-    public Optional<Collection> update(Long id, @Nullable String name, @Nullable String description) {
-        Optional<Collection> collection = repository.findById(id);
-        if (collection.isPresent()) {
-            name = name == null || name.isBlank() ? collection.get().getName() : name;
-            description = description == null ? collection.get().getDescription() : description;
-            collection.get().setName(name);
-            collection.get().setDescription(description);
-            return Optional.of(repository.save(collection.get()));
-        } else return collection;
-    }
-
-    public Optional<Collection> delete(Long id) {
-        Optional<Collection> collection = repository.findById(id);
-        if (collection.isPresent()) {
-            repository.deleteById(id);
+    @Transactional
+    public CollectionDto.Response update(Long id, CollectionDto.UpdateRequest updateRequest) {
+        Collection collection = this.find(id);
+        if (updateRequest.name() != null) collection.setName(updateRequest.name());
+        if (updateRequest.description() != null) {
+            collection.setDescription(updateRequest.description().isEmpty() ? null : updateRequest.description());
         }
-        return collection;
+        return CollectionDto.Response.from(collection);
+    }
+
+    @Transactional
+    public CollectionDto.SimpleResponse delete(Long id) {
+        Collection collection = this.find(id);
+        repository.delete(collection);
+        return CollectionDto.SimpleResponse.from(collection);
+    }
+
+    private Collection find(Long id) {
+        return repository.findById(id).orElseThrow(() ->
+                new CollectionNotFoundException(id));
     }
 }

@@ -1,57 +1,47 @@
 package net.hasagj.backend.controllers;
 
+import jakarta.validation.Valid;
 import net.hasagj.backend.dto.CollectionDto;
-import net.hasagj.backend.models.Collection;
-import net.hasagj.backend.models.Shelf;
 import net.hasagj.backend.services.CollectionService;
-import net.hasagj.backend.services.ShelfService;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/collections")
 public class CollectionController {
 
     private final CollectionService collectionService;
-    private final ShelfService shelfService;
 
-    public CollectionController(CollectionService collectionService, ShelfService shelfService) {
+    public CollectionController(CollectionService collectionService) {
         this.collectionService = collectionService;
-        this.shelfService = shelfService;
     }
 
-    @GetMapping("/collections")
-    public ResponseEntity<List<Collection>> getCollections() {
-        List<Collection> collections = collectionService.getAll();
-        return ResponseEntity.ok(collections);
+    @GetMapping
+    public List<CollectionDto.SimpleResponse> getCollections() {
+        return collectionService.getAll();
     }
 
-    @GetMapping("/collections/{id}")
-    public ResponseEntity<Collection> getCollectionById(@PathVariable Long id) {
-        Optional<Collection> collection = collectionService.get(id);
-        return collection.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("/{id}")
+    public CollectionDto.Response getCollectionById(@PathVariable Long id) {
+        return collectionService.get(id);
     }
 
-    @PostMapping("/collections")
-    public ResponseEntity<Collection> createCollection(@RequestBody CollectionDto request) {
-        Collection collection = collectionService.create(request.name(), request.description());
-        Shelf root = shelfService.create(null, null, collection, null, null);
-        return ResponseEntity.status(HttpStatus.CREATED).body(collection);
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public CollectionDto.Response createCollection(@Valid @RequestBody CollectionDto.CreateRequest createRequest) {
+        return collectionService.create(createRequest);
     }
 
-    @PatchMapping("/collections/{id}")
-    public ResponseEntity<Collection> updateCollection(@PathVariable Long id, @RequestBody CollectionDto request) {
-        Optional<Collection> collection = collectionService.update(id, request.name(), request.description());
-        return collection.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    @PatchMapping("/{id}")
+    public CollectionDto.Response updateCollection(
+            @PathVariable Long id, @Valid @RequestBody CollectionDto.UpdateRequest updateRequest) {
+        return collectionService.update(id, updateRequest);
     }
 
-    @DeleteMapping("/collections/{id}")
-    public ResponseEntity<Collection> deleteCollection(@PathVariable Long id) {
-        Optional<Collection> collection = collectionService.delete(id);
-        return collection.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    @DeleteMapping("/{id}")
+    public CollectionDto.SimpleResponse deleteCollection(@PathVariable Long id) {
+        return collectionService.delete(id);
     }
 }

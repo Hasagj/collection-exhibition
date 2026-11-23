@@ -2,9 +2,9 @@ package net.hasagj.backend.models;
 
 import jakarta.persistence.*;
 import net.hasagj.backend.util.Coordinates;
+import org.hibernate.proxy.HibernateProxy;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -20,11 +20,8 @@ public abstract class Element {
     @JoinColumn(nullable = false)
     private Collection collection;
 
-    @OneToOne(mappedBy = "element", cascade = CascadeType.PERSIST)
+    @OneToOne(mappedBy = "element", cascade = CascadeType.ALL, orphanRemoval = true)
     private ElementPlacement placement;
-
-    @ManyToMany
-    private List<Note> notes = new ArrayList<>();
 
     protected Element() {}
 
@@ -32,22 +29,8 @@ public abstract class Element {
         this.name = name;
         this.description = description;
         this.collection = collection;
-        ElementPlacement placement = new ElementPlacement();
-        this.placement = placement;
+        this.placement = new ElementPlacement(this, shelf, coordinates);
         shelf.addPlacement(placement);
-        placement.setElement(this);
-        placement.setCoordinates(coordinates);
-    }
-
-    public Element(String name, String description, Collection collection, Shelf shelf, float x, float y) {
-        this.name = name;
-        this.description = description;
-        this.collection = collection;
-        ElementPlacement placement = new ElementPlacement();
-        this.placement = placement;
-        shelf.addPlacement(placement);
-        placement.setElement(this);
-        placement.setCoordinates(x, y);
     }
 
     public Long getId() { return this.id; }
@@ -67,19 +50,30 @@ public abstract class Element {
         placement.setElement(this);
     }
 
-    public List<Note> getNotes() { return new ArrayList<>(this.notes); }
-    public Note getNote(int index) {
-        return index < 0 || this.notes.size() <= index
-                ? null
-                : this.notes.get(index);
+    @Override
+    public final boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null) return false;
+
+        Class<?> oEffectiveClass = o instanceof HibernateProxy proxy ?
+                proxy.getHibernateLazyInitializer().getPersistentClass()
+                : o.getClass();
+
+        Class<?> thisEffectiveClass = this instanceof  HibernateProxy proxy ?
+                proxy.getHibernateLazyInitializer().getPersistentClass()
+                : this.getClass();
+
+        if (thisEffectiveClass != oEffectiveClass) return false;
+
+        Element that = (Element) o;
+        return this.getId() != null && Objects.equals(this.getId(), that.getId());
+
     }
-    public void addNote(Note note) { this.notes.add(note); }
-    public boolean removeNote(int index) {
-        if (index < 0 || this.notes.size() <= index) {
-            return false;
-        } else {
-            this.notes.remove(index);
-            return true;
-        }
+
+    @Override
+    public final int hashCode() {
+        return this instanceof HibernateProxy proxy ?
+                proxy.getHibernateLazyInitializer().getPersistentClass().hashCode()
+                : this.getClass().hashCode();
     }
 }

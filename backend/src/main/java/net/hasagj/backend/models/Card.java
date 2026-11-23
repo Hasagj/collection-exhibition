@@ -1,8 +1,6 @@
 package net.hasagj.backend.models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import net.hasagj.backend.util.Coordinates;
 
 import java.util.ArrayList;
@@ -11,7 +9,8 @@ import java.util.List;
 @Entity
 public class Card extends Element {
 
-    @OneToMany(mappedBy = "card")
+    @OneToMany(mappedBy = "card", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OrderBy("orderInCard ASC")
     private List<Photo> photos = new ArrayList<>();
 
     @ManyToOne
@@ -24,21 +23,21 @@ public class Card extends Element {
         super(name, description, collection, shelf, coordinates);
     }
 
-    public Card(String name, String description, Collection collection, Shelf shelf, float x, float y) {
-        super(name, description, collection, shelf, x, y);
+    public List<Photo> getPhotos() { return new ArrayList<>(this.photos); }
+
+    public Photo getPhoto(Integer position) {
+        return position == null ||  position < 0 || this.photos.size() <= position
+                ? null
+                : this.photos.get(position);
     }
 
-    public List<Photo> getPhotos() { return new ArrayList<>(this.photos); }
-    public Photo getPhoto(int index) {
-        return index < 0 || this.photos.size() <= index
-                ? null
-                : this.photos.get(index);
-    }
-    public boolean addPhoto(Photo photo, int position) {
-        if (position < 0 || this.photos.size() < position || photo == null) return false;
+    public boolean hasPhoto(Photo photo) { return photo != null && this.photos.contains(photo); }
+
+    public boolean addPhoto(Photo photo, Integer position) {
+        if (position == null || position < 0 || this.photos.size() < position || photo == null) return false;
         if (position == this.photos.size()) {
             this.photos.add(photo);
-            return this.update();
+            return this.updatePositions();
         }
         List<Photo> left = new ArrayList<>(this.photos.subList(0, position));
         List<Photo> right = new ArrayList<>(this.photos.subList(position, this.photos.size()));
@@ -46,19 +45,19 @@ public class Card extends Element {
         left.addAll(right);
         this.photos.clear();
         this.photos.addAll(left);
-        return this.update();
+        return this.updatePositions();
     }
-    public boolean removePhoto(int index) {
-        if (index < 0 || this.photos.size() <= index) {
-            return false;
-        } else {
-            this.photos.get(index).setCard(null);
-            this.photos.get(index).setOrderInCard(null);
-            this.photos.remove(index);
-            return this.update();
-        }
+
+    public boolean removePhoto(Photo photo) {
+        if (!this.hasPhoto(photo)) return false;
+        this.photos.remove(photo);
+        this.updatePositions();
+        photo.setCard(null);
+        photo.setOrderInCard(null);
+        return true;
     }
-    public boolean update() {
+
+    private boolean updatePositions() {
         int i = 0;
         for (Photo photo : this.photos) {
             photo.setCard(this);
@@ -73,8 +72,4 @@ public class Card extends Element {
 
     public Integer getOrderInGroup() { return this.orderInGroup; }
     protected void setOrderInGroup(Integer orderInGroup) { this.orderInGroup = orderInGroup; }
-
-    /* _____to do_____ */
-    /*  custom fields  */
-    /* classifications */
 }

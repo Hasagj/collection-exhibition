@@ -9,10 +9,10 @@ import java.util.List;
 @Entity
 @Table(name = "element_group")
 public class Group extends Element {
-    @OneToOne(mappedBy = "group")
+    @OneToOne(mappedBy = "group", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Photo photo;
 
-    @OneToMany(mappedBy = "group")
+    @OneToMany(mappedBy = "group", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @OrderBy("orderInGroup ASC")
     private List<Card> cards = new ArrayList<>();
 
@@ -22,27 +22,34 @@ public class Group extends Element {
         super(name, description, collection, shelf, coordinates);
     }
 
-    public Group(String name, String description, Collection collection, Shelf shelf, float x, float y) {
-        super(name, description, collection, shelf, x, y);
-    }
-
     public Photo getPhoto() { return this.photo; }
     public void setPhoto(Photo photo) {
+        if (photo == null && this.photo != null) {
+            this.photo.setGroup(null);
+            this.photo = null;
+            return;
+        }
         this.photo = photo;
         photo.setGroup(this);
     }
 
     public List<Card> getCards() { return new ArrayList<>(this.cards); }
-    public Card getCard(int index) {
-        return index < 0 || this.cards.size() <= index
+
+    public Card getCard(Integer position) {
+        return position == null || position < 0 || this.cards.size() <= position
                 ? null
-                : this.cards.get(index);
+                : this.cards.get(position);
     }
-    public boolean addCard(Card card, int position) {
-        if (position < 0 || this.cards.size() < position || card == null) return false;
+
+    public boolean hasCard(Card card) {
+        return this.cards.contains(card);
+    }
+
+    public boolean addCard(Card card, Integer position) {
+        if (position == null || position < 0 || this.cards.size() < position || card == null) return false;
         if (position == this.cards.size()) {
             this.cards.add(card);
-            return this.update();
+            return this.updatePositions();
         }
         List<Card> left = new ArrayList<>(this.cards.subList(0, position));
         List<Card> right = new ArrayList<>(this.cards.subList(position, this.cards.size()));
@@ -50,19 +57,19 @@ public class Group extends Element {
         left.addAll(right);
         this.cards.clear();
         this.cards.addAll(left);
-        return this.update();
+        return this.updatePositions();
     }
-    public boolean removeCard(int index) {
-        if (index < 0 || this.cards.size() <= index) {
-            return false;
-        } else {
-            this.cards.get(index).setGroup(null);
-            this.cards.get(index).setOrderInGroup(null);
-            this.cards.remove(index);
-            return this.update();
-        }
+
+    public boolean removeCard(Card card) {
+        if (!this.hasCard(card)) return false;
+        this.cards.remove(card);
+        this.updatePositions();
+        card.setGroup(null);
+        card.setOrderInGroup(null);
+        return true;
     }
-    private boolean update() {
+
+    private boolean updatePositions() {
         int i = 0;
         for (Card card : this.cards) {
             card.setGroup(this);

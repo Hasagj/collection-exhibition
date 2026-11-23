@@ -1,72 +1,88 @@
 package net.hasagj.backend.services;
 
+import net.hasagj.backend.dto.ShelfDto;
+import net.hasagj.backend.exceptions.collection.CollectionNotFoundException;
+import net.hasagj.backend.exceptions.shelf.RootShelfDeletionException;
+import net.hasagj.backend.exceptions.shelf.RootShelfUpdateException;
+import net.hasagj.backend.exceptions.shelf.ShelfNotFoundException;
 import net.hasagj.backend.models.Collection;
 import net.hasagj.backend.models.Shelf;
+import net.hasagj.backend.repositories.CollectionRepository;
 import net.hasagj.backend.repositories.ShelfRepository;
-import net.hasagj.backend.util.Coordinates;
-import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@Transactional(readOnly = true)
 public class ShelfService {
-    private final ShelfRepository repository;
 
-    public ShelfService(ShelfRepository repository) { this.repository = repository; }
+    private final ElementPlacementService elementPlacementService;
+    private final CollectionRepository collectionRepository;
+    private final ShelfRepository shelfRepository;
 
-    public Shelf create(String name, @Nullable String description, Collection collection, @Nullable Shelf shelf, @Nullable Coordinates coordinates) {
-        name = name == null || name.isBlank() ? "Untitled" : name.trim();
-        description = description == null || description.isBlank() ? null : description;
-        Shelf newShelf = shelf == null && coordinates == null ?
-                Shelf.createRoot(collection)
-                : new Shelf(
-                        name,
-                        description,
-                        collection,
-                        shelf,
-                        coordinates
-                );
-        return repository.save(newShelf);
+    public ShelfService(
+            ElementPlacementService elementPlacementService,
+            CollectionRepository collectionRepository,
+            ShelfRepository shelfRepository
+    ) {
+        this.elementPlacementService = elementPlacementService;
+        this.collectionRepository = collectionRepository;
+        this.shelfRepository = shelfRepository;
     }
 
-    public Shelf create(String name, @Nullable String description, Collection collection, @Nullable Shelf shelf, @Nullable Float x, @Nullable Float y) {
-        name = name == null || name.isBlank() ? "Untitled" : name.trim();
-        description = description == null || description.isBlank() ? null : description;
-        Shelf newShelf = shelf == null && x == null && y == null ?
-                Shelf.createRoot(collection)
-                : new Shelf(
-                name,
-                description,
+    @Transactional
+    public ShelfDto.Response create(Long collectionId, ShelfDto.CreateRequest createRequest) {
+        Collection collection = collectionRepository.findById(collectionId).orElseThrow(
+                () -> new CollectionNotFoundException(collectionId));
+        Shelf parentShelf = createRequest.shelfId() == null ?
+               collection.getRootShelf() : this.find(createRequest.shelfId(), collectionId);
+        Shelf shelf = new Shelf(
+                createRequest.name(),
+                createRequest.description(),
                 collection,
-                shelf,
-                x == null ? 0F : x,
-                y == null ? 0F : y
+                parentShelf,
+                createRequest.coordinates()
         );
-        return repository.save(newShelf);
+        return ShelfDto.Response.from(shelfRepository.save(shelf));
     }
 
-    public List<Shelf> getAll() { return repository.findAll(); }
-
-    public Optional<Shelf> get(Long id) { return repository.findById(id); }
-
-    public Optional<Shelf> update(Long id, @Nullable String name, @Nullable String description) {
-        Optional<Shelf> shelf = repository.findById(id);
-        if (shelf.isPresent()) {
-            name = name == null || name.isBlank() ? shelf.get().getName() : name;
-            description = description == null ? shelf.get().getDescription() : description;
-            shelf.get().setName(name);
-            shelf.get().setDescription(description);
-            return Optional.of(repository.save(shelf.get()));
-        } else return shelf;
+    public List<ShelfDto.SimpleResponse> getAll(Long collectionId) {
+        return shelfRepository.findAllByCollectionId(collectionId);
     }
 
-    public Optional<Shelf> delete(Long id) {
-        Optional<Shelf> shelf = repository.findById(id);
-        if (shelf.isPresent()) {
-            repository.deleteById(id);
+    public ShelfDto.Response get(Long id, Long collectionId) {
+        return ShelfDto.Response.from(
+                shelfRepository.findWithInnerPlacementsByIdAndCollectionId(id, collectionId).orElseThrow(() ->
+                        new ShelfNotFoundException(id, collectionId)));
+    }
+
+    @Transactional
+    public ShelfDto.Response update(Long id, Long collectionId, ShelfDto.UpdateRequest updateRequest) {
+        Shelf shelf = this.find(id, collectionId);
+        if (shelf.isRoot()) throw new RootShelfUpdateException(id, collectionId);
+        Shelf parentShelf = updateRequest.shelfId() != null ?
+                this.find(updateRequest.shelfId(), collectionId)
+                : null;
+        if (updateRequest.name() != null) shelf.setName(updateRequest.name());
+        if (updateRequest.description() != null) {
+            shelf.setDescription(updateRequest.description().isEmpty() ? null : updateRequest.description());
         }
-        return shelf;
+        elementPlacementService.update(shelf, parentShelf, updateRequest.coordinates());
+        return ShelfDto.Response.from(shelf);
+    }
+
+    @Transactional
+    public ShelfDto.SimpleResponse delete(Long id, Long collectionId) {
+        Shelf shelf = this.find(id, collectionId);
+        if (shelf.isRoot()) throw new RootShelfDeletionException(id, collectionId);
+        shelfRepository.delete(shelf);
+        return ShelfDto.SimpleResponse.from(shelf);
+    }
+
+    private Shelf find(Long id, Long collectionId) {
+        return shelfRepository.findByIdAndCollectionId(id, collectionId).orElseThrow(() ->
+                new ShelfNotFoundException(id, collectionId));
     }
 }
