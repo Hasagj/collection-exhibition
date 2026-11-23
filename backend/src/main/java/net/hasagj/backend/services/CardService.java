@@ -63,7 +63,7 @@ public class CardService {
     }
 
     public List<CardDto.SimpleResponse> getAll(Long collectionId) {
-        return cardRepository.findAllByCollectionId(collectionId);
+        return cardRepository.findAllByCollectionId(collectionId).stream().map(CardDto.SimpleResponse::from).toList();
     }
 
     public CardDto.Response get(Long id, Long collectionId) {

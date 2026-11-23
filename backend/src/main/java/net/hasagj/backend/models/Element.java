@@ -17,7 +17,6 @@ public abstract class Element {
     private String description;
 
     @ManyToOne
-    @JoinColumn(nullable = false)
     private Collection collection;
 
     @OneToOne(mappedBy = "element", cascade = CascadeType.ALL, orphanRemoval = true)

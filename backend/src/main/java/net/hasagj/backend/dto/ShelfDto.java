@@ -40,7 +40,7 @@ public sealed interface ShelfDto {
             String name,
             @Nullable String description,
             Long collectionId,
-            ElementPlacementResponse selfPlacement,
+            ElementPlacementResponse placement,
             List<ElementPlacementResponse> innerPlacements
     ) implements ShelfDto {
         public static Response from(Shelf shelf) {
@@ -59,7 +59,7 @@ public sealed interface ShelfDto {
             Long id,
             String name,
             Long collectionId,
-            ElementPlacementResponse selfPlacement
+            ElementPlacementResponse placement
     ) implements ShelfDto {
         public static SimpleResponse from(Shelf shelf) {
             return new SimpleResponse(

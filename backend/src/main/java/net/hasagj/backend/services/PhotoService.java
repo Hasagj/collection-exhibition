@@ -2,6 +2,7 @@ package net.hasagj.backend.services;
 
 import net.hasagj.backend.dto.PhotoDto;
 import net.hasagj.backend.exceptions.collection.CollectionNotFoundException;
+import net.hasagj.backend.exceptions.photo.PhotoBadPathException;
 import net.hasagj.backend.exceptions.photo.PhotoNotFoundException;
 import net.hasagj.backend.models.Collection;
 import net.hasagj.backend.models.Photo;
@@ -36,7 +37,7 @@ public class PhotoService {
     }
 
     public List<PhotoDto.SimpleResponse> getAll(Long collectionId) {
-        return photoRepository.findAllByCollectionId(collectionId);
+        return photoRepository.findAllByCollectionId(collectionId).stream().map(PhotoDto.SimpleResponse::from).toList();
     }
 
     public PhotoDto.Response get(String path, Long collectionId) {
@@ -45,8 +46,13 @@ public class PhotoService {
 
     @Transactional
     public PhotoDto.SimpleResponse update(String oldPath, Long collectionId, @Nullable String newPath) {
+        if (newPath == null
+                || photoRepository.existsByPathAndCollectionId(newPath, collectionId)
+                || newPath.equals(oldPath)) {
+            throw new PhotoBadPathException(newPath);
+        }
         Photo photo = find(oldPath, collectionId);
-        if (newPath != null) photo.setPath(newPath);
+        photo.setPath(newPath);
         return PhotoDto.SimpleResponse.from(photo);
     }
 

@@ -44,7 +44,7 @@ public class GroupService {
     }
 
     @Transactional
-    public Group create(Long collectionId, GroupDto.CreateRequest createRequest) {
+    public GroupDto.Response create(Long collectionId, GroupDto.CreateRequest createRequest) {
         Collection collection = collectionRepository.findById(collectionId).orElseThrow(() ->
                 new CollectionNotFoundException(collectionId));
         Shelf shelf = createRequest.shelfId() == null ?
@@ -60,11 +60,11 @@ public class GroupService {
                 shelf,
                 createRequest.coordinates()
         );
-        return groupRepository.save(group);
+        return GroupDto.Response.from(groupRepository.save(group));
     }
 
     public List<GroupDto.SimpleResponse> getAll(Long collectionId) {
-        return groupRepository.findAllByCollectionId(collectionId);
+        return groupRepository.findAllByCollectionId(collectionId).stream().map(GroupDto.SimpleResponse::from).toList();
     }
 
     public GroupDto.Response get(Long id, Long collectionId) {
@@ -106,10 +106,10 @@ public class GroupService {
     }
 
     @Transactional
-    public PhotoDto.Response removePhoto(Long id, Long collectionId, String path) {
+    public PhotoDto.Response removePhoto(Long id, Long collectionId) {
         Group group = groupRepository.findByIdAndCollectionId(id, collectionId).orElseThrow(() ->
                 new GroupNotFoundException(id, collectionId));
-        if (group.getPhoto() == null) throw new PhotoNotFoundException(path, id);
+        if (group.getPhoto() == null) throw new PhotoNotFoundException(id);
         PhotoDto.Response response = PhotoDto.Response.from(group.getPhoto());
         group.setPhoto(null);
         return response;
@@ -142,7 +142,7 @@ public class GroupService {
         Card card = group.getCards().stream().filter(cardGroup ->
                 cardGroup.getId().equals(cardId)).findFirst().orElseThrow(() ->
                 new CardNotFoundException(cardId, collectionId));
-        position = Math.min(position, card.getPhotos().size());
+        position = Math.min(position, group.getCards().size());
         group.removeCard(card);
         if (!group.addCard(card, position)) throw new CardBadPositionException(position);
         return CardDto.SimpleResponse.from(card);

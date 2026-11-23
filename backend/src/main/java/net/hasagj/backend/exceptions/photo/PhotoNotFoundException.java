@@ -9,4 +9,7 @@ public class PhotoNotFoundException extends ResourceNotFoundException {
     public PhotoNotFoundException(String path, Long elementId) {
         super("Element (ID: " + elementId + ") do NOT contains photo (Path: " + path + ")");
     }
+    public PhotoNotFoundException(Long elementId) {
+        super("Element (ID: " + elementId + ") do NOT contains photo");
+    }
 }

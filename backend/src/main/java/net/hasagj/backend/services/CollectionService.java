@@ -28,7 +28,7 @@ public class CollectionService {
     }
 
     public List<CollectionDto.SimpleResponse> getAll() {
-        return repository.findAllProjectedBy();
+        return repository.findAll().stream().map(CollectionDto.SimpleResponse::from).toList();
     }
 
     public CollectionDto.Response get(Long id) {

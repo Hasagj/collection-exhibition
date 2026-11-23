@@ -15,7 +15,7 @@ public class Collection {
     private String name;
     private String description;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "root_shelf_id")
     private Shelf rootShelf;
 

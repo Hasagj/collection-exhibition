@@ -49,7 +49,7 @@ public class ShelfService {
     }
 
     public List<ShelfDto.SimpleResponse> getAll(Long collectionId) {
-        return shelfRepository.findAllByCollectionId(collectionId);
+        return shelfRepository.findAllByCollectionId(collectionId).stream().map(ShelfDto.SimpleResponse::from).toList();
     }
 
     public ShelfDto.Response get(Long id, Long collectionId) {

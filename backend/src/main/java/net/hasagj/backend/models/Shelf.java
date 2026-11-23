@@ -22,7 +22,7 @@ public class Shelf extends Element {
 
     public static Shelf createRoot(Collection collection) {
         Shelf root = new Shelf();
-        root.setName("Root of collection: " + collection.getId());
+        root.setName("Root");
         root.setDescription("This is the root shelf");
         root.setCollection(collection);
         return root;

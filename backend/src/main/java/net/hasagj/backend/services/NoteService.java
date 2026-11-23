@@ -12,6 +12,7 @@ import net.hasagj.backend.repositories.CollectionRepository;
 import net.hasagj.backend.repositories.ElementRepository;
 import net.hasagj.backend.repositories.NoteRepository;
 import net.hasagj.backend.repositories.ShelfRepository;
+import org.hibernate.proxy.HibernateProxy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,7 +62,7 @@ public class NoteService {
     }
 
     public List<NoteDto.SimpleResponse> getAll(Long collectionId) {
-        return noteRepository.findAllByCollectionId(collectionId);
+        return noteRepository.findAllByCollectionId(collectionId).stream().map(NoteDto.SimpleResponse::from).toList();
     }
 
     public NoteDto.Response get(Long id, Long collectionId) {
@@ -98,7 +99,14 @@ public class NoteService {
                 new ElementNotFoundException(elementId, collectionId));
         if (element instanceof Note) throw new InvalidNoteTargetException(id, elementId);
         note.addElement(element);
-        return ElementResponse.from(element);
+        return new ElementResponse(
+                elementId,
+                element.getName(),
+                element.getDescription(),
+                element instanceof HibernateProxy proxy ?
+                        proxy.getHibernateLazyInitializer().getPersistentClass().getSimpleName()
+                        : element.getClass().getSimpleName(),
+                collectionId);
     }
 
     @Transactional
@@ -108,7 +116,14 @@ public class NoteService {
                 elementNote.getId().equals(elementId)).findFirst().orElseThrow(() ->
                 new ElementNotFoundException(elementId, collectionId));
         note.removeElement(element);
-        return ElementResponse.from(element);
+        return new ElementResponse(
+                elementId,
+                element.getName(),
+                element.getDescription(),
+                element instanceof HibernateProxy proxy ?
+                        proxy.getHibernateLazyInitializer().getPersistentClass().getSimpleName()
+                        : element.getClass().getSimpleName(),
+                collectionId);
     }
 
     private Note find(Long id, Long collectionId) {

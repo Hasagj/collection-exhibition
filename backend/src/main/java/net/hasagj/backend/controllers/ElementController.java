@@ -11,17 +11,16 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/collection/{collectionId}")
+@RequestMapping("/api/collection/{collectionId}/elements")
 public class ElementController {
-    private final ElementService service;
+    private final ElementService elementService;
 
-    private ElementController(ElementService service) {
-        this.service = service;
+    public ElementController(ElementService elementService) {
+        this.elementService = elementService;
     }
 
-    @GetMapping("/elements")
+    @GetMapping
     public List<ElementResponse> getElements(@PathVariable Long collectionId) {
-        List<ElementResponse> elements = service.getAll(collectionId);
-        return ResponseEntity.ok(elements);
+        return elementService.getAll(collectionId);
     }
 }

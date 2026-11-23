@@ -11,7 +11,16 @@ public sealed interface PhotoDto {
             @Nullable Long groupId
     ) implements PhotoDto {
         public static Response from(Photo photo) {
-            return new Response(photo.getId(), photo.getPath(), photo.getCard().getId(), photo.getGroup().getId());
+            return new Response(
+                    photo.getId(),
+                    photo.getPath(),
+                    photo.getCard() != null ?
+                            photo.getCard().getId()
+                            : null,
+                    photo.getGroup() != null ?
+                            photo.getGroup().getId()
+                            : null
+            );
         }
     }
 

@@ -10,7 +10,7 @@ public record ElementPlacementResponse(
         Long elementId,
         Coordinates coordinates
 ) {
-    public static @Nullable ElementPlacementResponse from(ElementPlacement elementPlacement) {
+    public static @Nullable ElementPlacementResponse from(@Nullable ElementPlacement elementPlacement) {
         return elementPlacement != null ?
                 new ElementPlacementResponse(
                         elementPlacement.getId(),

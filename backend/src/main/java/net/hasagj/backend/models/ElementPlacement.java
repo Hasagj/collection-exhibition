@@ -15,7 +15,7 @@ public class ElementPlacement {
     @ManyToOne(fetch = FetchType.LAZY)
     private Shelf shelf;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
     private Element element;
 
     @Embedded

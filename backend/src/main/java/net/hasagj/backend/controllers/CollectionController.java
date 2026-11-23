@@ -35,8 +35,7 @@ public class CollectionController {
     }
 
     @PatchMapping("/{id}")
-    public CollectionDto.Response updateCollection(
-            @PathVariable Long id, @Valid @RequestBody CollectionDto.UpdateRequest updateRequest) {
+    public CollectionDto.Response updateCollection(@PathVariable Long id, @Valid @RequestBody CollectionDto.UpdateRequest updateRequest) {
         return collectionService.update(id, updateRequest);
     }
 

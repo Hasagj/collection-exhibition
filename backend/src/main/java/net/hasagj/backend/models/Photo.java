@@ -6,6 +6,10 @@ import org.hibernate.proxy.HibernateProxy;
 import java.util.Objects;
 
 @Entity
+@Table(
+        name = "photo",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"collection_id", "path"})
+)
 public class Photo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +30,10 @@ public class Photo {
 
     protected Photo() {}
 
-    public Photo(String path, Collection collection) { this.path = path; }
+    public Photo(String path, Collection collection) {
+        this.path = path;
+        this.collection = collection;
+    }
 
     public Long getId() { return this.id; }
 
