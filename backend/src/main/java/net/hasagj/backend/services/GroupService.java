@@ -3,10 +3,12 @@ package net.hasagj.backend.services;
 import net.hasagj.backend.dto.CardDto;
 import net.hasagj.backend.dto.GroupDto;
 import net.hasagj.backend.dto.PhotoDto;
+import net.hasagj.backend.exceptions.card.CardAddingException;
 import net.hasagj.backend.exceptions.card.CardBadPositionException;
 import net.hasagj.backend.exceptions.card.CardNotFoundException;
 import net.hasagj.backend.exceptions.collection.CollectionNotFoundException;
 import net.hasagj.backend.exceptions.group.GroupNotFoundException;
+import net.hasagj.backend.exceptions.photo.PhotoAddingException;
 import net.hasagj.backend.exceptions.photo.PhotoBadPathException;
 import net.hasagj.backend.exceptions.photo.PhotoNotFoundException;
 import net.hasagj.backend.exceptions.shelf.ShelfNotFoundException;
@@ -101,6 +103,8 @@ public class GroupService {
         if (path == null) throw new PhotoBadPathException(path);
         Photo photo =
                 photoRepository.findByPathAndCollectionId(path, collectionId).orElse(new Photo(path, collection));
+        if (photo.getGroup() != null) throw new PhotoAddingException(path, photo.getId());
+        if (group.getPhoto() != null) group.setPhoto(null);
         group.setPhoto(photo);
         return PhotoDto.Response.from(photo);
     }
@@ -120,6 +124,7 @@ public class GroupService {
         Group group = this.find(id, collectionId);
         Card card = cardRepository.findByIdAndCollectionId(cardId, collectionId).orElseThrow(() ->
                 new CardNotFoundException(cardId, collectionId));
+        if (card.getGroup() != null) throw new CardAddingException(cardId, card.getGroup().getId());
         position = Math.min(position, group.getCards().size());
         if (!group.addCard(card, position)) throw new CardBadPositionException(position);
         return CardDto.SimpleResponse.from(card);
@@ -142,8 +147,8 @@ public class GroupService {
         Card card = group.getCards().stream().filter(cardGroup ->
                 cardGroup.getId().equals(cardId)).findFirst().orElseThrow(() ->
                 new CardNotFoundException(cardId, collectionId));
-        position = Math.min(position, group.getCards().size());
         group.removeCard(card);
+        position = Math.min(position, group.getCards().size());
         if (!group.addCard(card, position)) throw new CardBadPositionException(position);
         return CardDto.SimpleResponse.from(card);
     }

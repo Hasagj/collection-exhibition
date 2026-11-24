@@ -24,8 +24,9 @@ public class Note extends Element {
     }
 
     public boolean addElement(Element element) {
-        if (element instanceof Note ||
-                element instanceof Shelf shelf && shelf.isRoot()) return false;
+        if (element instanceof Note
+                || this.hasElement(element)
+                || element instanceof Shelf shelf && shelf.isRoot()) return false;
         this.elements.add(element);
         return true;
     }

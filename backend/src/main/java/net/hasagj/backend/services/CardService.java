@@ -3,6 +3,7 @@ package net.hasagj.backend.services;
 import net.hasagj.backend.dto.CardDto;
 import net.hasagj.backend.dto.PhotoDto;
 import net.hasagj.backend.exceptions.card.CardNotFoundException;
+import net.hasagj.backend.exceptions.photo.PhotoAddingException;
 import net.hasagj.backend.exceptions.photo.PhotoBadPathException;
 import net.hasagj.backend.exceptions.photo.PhotoBadPositionException;
 import net.hasagj.backend.exceptions.collection.CollectionNotFoundException;
@@ -103,6 +104,7 @@ public class CardService {
         Collection collection = card.getCollection();
         Photo photo =
                 photoRepository.findByPathAndCollectionId(path, collectionId).orElse(new Photo(path, collection));
+        if (photo.getCard() != null) throw new PhotoAddingException(path, photo.getCard().getId());
         position = Math.min(position, card.getPhotos().size());
         if (!card.addPhoto(photo, position)) throw new PhotoBadPositionException(position);
         return PhotoDto.Response.from(photo);
@@ -127,8 +129,8 @@ public class CardService {
         Photo photo = card.getPhotos().stream().filter(cardPhoto ->
                 cardPhoto.getPath().equals(path)).findFirst().orElseThrow(() ->
                 new PhotoNotFoundException(path, id));
-        position = Math.min(position, card.getPhotos().size());
         card.removePhoto(photo);
+        position = Math.min(position, card.getPhotos().size());
         if (!card.addPhoto(photo, position)) throw new PhotoBadPositionException(position);
         return PhotoDto.Response.from(photo);
     }

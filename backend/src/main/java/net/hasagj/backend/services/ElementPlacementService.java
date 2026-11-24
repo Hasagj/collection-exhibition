@@ -27,6 +27,14 @@ public class ElementPlacementService {
                                     newShelf.getId().equals(shelf.getId()))) {
                 throw new BadElementMovingException(element.getId(), newShelf.getId());
             }
+            Shelf validate = newShelf;
+            while (validate.getPlacement() != null &&
+                    validate.getPlacement().getShelf() != null) {
+                validate = validate.getPlacement().getShelf();
+                if (element instanceof Shelf shelf && shelf.equals(validate)) {
+                    throw new BadElementMovingException(element.getId(), newShelf.getId());
+                }
+            }
             oldShelf.removePlacement(oldShelf.getInnerPlacements().indexOf(placement));
             newShelf.addPlacement(placement);
         }

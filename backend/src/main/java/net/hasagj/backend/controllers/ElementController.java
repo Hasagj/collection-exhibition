@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/collection/{collectionId}/elements")
+@RequestMapping("/api/collections/{collectionId}/elements")
 public class ElementController {
     private final ElementService elementService;
 

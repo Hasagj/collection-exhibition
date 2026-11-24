@@ -97,8 +97,7 @@ public class NoteService {
         Note note = find(id, collectionId);
         Element element = elementRepository.findByIdAndCollectionId(elementId, collectionId).orElseThrow(() ->
                 new ElementNotFoundException(elementId, collectionId));
-        if (element instanceof Note) throw new InvalidNoteTargetException(id, elementId);
-        note.addElement(element);
+        if (!note.addElement(element)) throw new InvalidNoteTargetException(id, elementId);
         return new ElementResponse(
                 elementId,
                 element.getName(),
